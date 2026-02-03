@@ -1315,7 +1315,7 @@ wheels = [
 [[package]]
 name = "objekt-api"
 version = "0.0.1"
-source = { git = "https://github.com/devinthai/objekt_api#6a13dd246f4322de314e39242c3797e130f1f5fa" }
+source = { git = "https://github.com/devinthai/objekt_api#9cabb3ecbcd4311a887cedd418ef57b23aabe93f" }
 dependencies = [
     { name = "logging" },
     { name = "pydantic" },

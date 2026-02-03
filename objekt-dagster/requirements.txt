@@ -138,7 +138,7 @@ numpy==2.2.6 ; python_full_version < '3.11'
     # via pandas
 numpy==2.4.2 ; python_full_version >= '3.11'
     # via pandas
-objekt-api @ git+https://github.com/devinthai/objekt_api@6a13dd246f4322de314e39242c3797e130f1f5fa
+objekt-api @ git+https://github.com/devinthai/objekt_api@9cabb3ecbcd4311a887cedd418ef57b23aabe93f
     # via objekt-dagster
 packaging==26.0
     # via
