@@ -27,6 +27,7 @@ Install the python dependencies with [pip](https://pypi.org/project/pip/):
 
 ```bash
 python3 -m venv .venv
+pip install -r requirements.txt
 ```
 
 Then activate the virtual environment:
