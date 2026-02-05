@@ -1,10 +1,11 @@
 [project]
 name = "objekt_dagster"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.13"
 version = "0.1.0"
 dependencies = [
     "dagster==1.12.13",
     "objekt-api",
+    "objekt-db",
     "pandas>=2.3.3",
 ]
 
@@ -32,5 +33,6 @@ registry_modules = [
 
 [tool.uv.sources]
 objekt-api = { git = "https://github.com/devinthai/objekt_api" }
+objekt-db = { git = "https://github.com/devinthai/objekt-db" }
 
 
