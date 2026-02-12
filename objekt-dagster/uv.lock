@@ -975,7 +975,7 @@ dev = [
 [[package]]
 name = "objekt-db"
 version = "0.1.0"
-source = { git = "https://github.com/devinthai/objekt-db#f4b20ad27535aef2d33cf7de6a11f2aace46e1d6" }
+source = { git = "https://github.com/devinthai/objekt-db#ddaa51ad6b8068a1e4816ff349377f4d0fc84fe2" }
 dependencies = [
     { name = "sqlalchemy" },
 ]
