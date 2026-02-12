@@ -134,9 +134,9 @@ multidict==6.7.1
     # via yarl
 numpy==2.4.2
     # via pandas
-objekt-api @ git+https://github.com/devinthai/objekt_api@16d3dc01a0133184f7abb359df926f7e0f36ac2d
+objekt-api @ git+https://github.com/devinthai/objekt_api@25a409bcea7519fdd690b45b0634db08bc8d430b
     # via objekt-dagster
-objekt-db @ git+https://github.com/devinthai/objekt-db@2346e32844ab20aba0c3be1d29a665b37269c1a7
+objekt-db @ git+https://github.com/devinthai/objekt-db@ddaa51ad6b8068a1e4816ff349377f4d0fc84fe2
     # via objekt-dagster
 packaging==26.0
     # via
