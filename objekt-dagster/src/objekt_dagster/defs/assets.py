@@ -2,7 +2,7 @@ import dagster as dg
 from objekt_api.objekt_api import ObjektApi
 import objekt_api.models
 from dagster import AssetExecutionContext, ResourceParam
-from sqlalchemy import Select
+from sqlalchemy import Select, or_
 from sqlalchemy.orm import Session 
 from sqlalchemy.dialects.postgresql import insert
 from db.models.slugs import Slugs 
@@ -28,6 +28,7 @@ def sqlalchemy_slugs_dict_list(collection):
 
     for slug in collection:
         current_slug = slug.model_dump()
+        current_slug['workBatch'] = hash(current_slug['slugId']) % 4
         slugs_list.append(current_slug)
 
     return slugs_list
@@ -43,8 +44,25 @@ def postgresql_slugs_upsert(sqlalchemy_slugs_dict_list: list[dict], objekt_db_se
     """
     insert_stmt = insert(Slugs).values(sqlalchemy_slugs_dict_list)
 
-    on_conflict_stmt = insert_stmt.on_conflict_do_nothing(
-         index_elements=[Slugs.__table__.c.slugId]
+    # excluded gets the values that would have been inserted had there been no conflict
+    excluded = insert_stmt.excluded
+
+    # create a dict of the updated cols and their values as long as they're not the unique identifiers
+    update_cols = {
+        col.name: getattr(excluded, col.name)
+        for col in Slugs.__table__.columns
+        if col.name not in ["slugId", "id"]
+    }
+
+    # only update the rows that had a change to at least one of their values
+    where_clause = or_(*[
+        getattr(Slugs, col).is_distinct_from(getattr(excluded, col)) for col in update_cols
+    ])
+
+    on_conflict_stmt = insert_stmt.on_conflict_do_update(
+        index_elements=[Slugs.__table__.c.slugId],
+        set_ = update_cols,
+        where = where_clause,
     )
 
     with objekt_db_session as session:
