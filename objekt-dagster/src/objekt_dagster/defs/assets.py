@@ -71,30 +71,81 @@ def postgresql_slugs_upsert(sqlalchemy_slugs_dict_list: list[dict], objekt_db_se
 
     return
 
+def process_metadata_list(metadata_list):
+    now = dt.now(UTC)
+
+    metadata_dicts = [
+        {
+            **data['metadata'].model_dump(),
+            "slug": data['slug'],
+            "snapshotTimestamp" : now
+        }
+        for data in metadata_list
+    ]
+
+    return metadata_dicts
+
 @dg.asset()
-def get_metadata_snapshot(context: AssetExecutionContext, objekt_api: ResourceParam[ObjektApi], objekt_db_session: ResourceParam[Session]):
-    res = objekt_db_session.execute(Select(Slugs))
+def get_metadata_snapshot_batch0(objekt_api: ResourceParam[ObjektApi], objekt_db_session: ResourceParam[Session]):
+    res = objekt_db_session.execute(Select(Slugs).where(Slugs.workBatch == 0))
     rows = res.all()
 
-    metadata_list = []
-    for row in rows:
-        # print(f"Getting metadata for {row.Slugs.slugString}.")
-        fetch_string = f"Getting metadata for {row.Slugs.slugString}"
-        context.log.info(fetch_string)
-        metadata = objekt_api.get_metadata(row.Slugs.slugString)
-        metadata_dict = metadata.model_dump()
-        metadata_dict['snapshotTimestamp'] = dt.now(UTC)
-        metadata_list.append(metadata_dict)
+    slugs_list = [row.Slugs.slugString for row in rows]
+    metadata_list = objekt_api.get_bulk_metadata(slugs_list)
+    metadata_dicts = process_metadata_list(metadata_list)
+    return metadata_dicts
 
-    return metadata_list
+
+@dg.asset()
+def get_metadata_snapshot_batch1(objekt_api: ResourceParam[ObjektApi], objekt_db_session: ResourceParam[Session]):
+    res = objekt_db_session.execute(Select(Slugs).where(Slugs.workBatch == 1))
+    rows = res.all()
+
+    slugs_list = [row.Slugs.slugString for row in rows]
+    metadata_list = objekt_api.get_bulk_metadata(slugs_list)
+    metadata_dicts = process_metadata_list(metadata_list)
+    return metadata_dicts
+
+
+@dg.asset()
+def get_metadata_snapshot_batch2(objekt_api: ResourceParam[ObjektApi], objekt_db_session: ResourceParam[Session]):
+    res = objekt_db_session.execute(Select(Slugs).where(Slugs.workBatch == 2))
+    rows = res.all()
+
+    slugs_list = [row.Slugs.slugString for row in rows]
+    metadata_list = objekt_api.get_bulk_metadata(slugs_list)
+    metadata_dicts = process_metadata_list(metadata_list)
+    return metadata_dicts
+
+
+@dg.asset()
+def get_metadata_snapshot_batch3(objekt_api: ResourceParam[ObjektApi], objekt_db_session: ResourceParam[Session]):
+    res = objekt_db_session.execute(Select(Slugs).where(Slugs.workBatch == 3))
+    rows = res.all()
+
+    slugs_list = [row.Slugs.slugString for row in rows]
+    metadata_list = objekt_api.get_bulk_metadata(slugs_list)
+    metadata_dicts = process_metadata_list(metadata_list)
+    return metadata_dicts
+
 
 @dg.asset(deps=[
-    get_metadata_snapshot
+    get_metadata_snapshot_batch0,
+    get_metadata_snapshot_batch1,
+    get_metadata_snapshot_batch2,
+    get_metadata_snapshot_batch3
 ])
-def insert_metadata_snapshot(get_metadata_snapshot: list[dict], objekt_db_session: ResourceParam[Session]):
-    insert_stmt = insert(MetadataSnapshot).values(get_metadata_snapshot)
+def insert_metadata_snapshot(
+    get_metadata_snapshot_batch0,
+    get_metadata_snapshot_batch1,
+    get_metadata_snapshot_batch2,
+    get_metadata_snapshot_batch3,
+    objekt_db_session: ResourceParam[Session]
+):
+    for metadata_list in [get_metadata_snapshot_batch0, get_metadata_snapshot_batch1, get_metadata_snapshot_batch2, get_metadata_snapshot_batch3]:
+        insert_stmt = insert(MetadataSnapshot).values(metadata_list)
 
-    with objekt_db_session as session:
-        session.execute(insert_stmt)
-        session.commit()
+        with objekt_db_session as session:
+            session.execute(insert_stmt)
+            session.commit()
 
